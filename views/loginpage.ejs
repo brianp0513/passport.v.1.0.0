@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Login Page</title>
+</head>
+<body>
+    <p>this is login page</p>
+    <form method = "POST" action = '/login'>
+        <input type = "text" placeholder="TYPE ID" name = "Email">
+        <input type = "text" placeholder="TYPE PW" name = "PW">
+        <input type = "submit" value = "LOGIN">
+    </form>
+    <form method = "POST" action = "/gotoregister">
+        <input type = "submit" value = "SIGN-UP">
+    </form>
+    <h5><%=message%></h5>
+</body>
+</html>
