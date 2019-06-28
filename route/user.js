@@ -33,18 +33,11 @@ router.post('/login',(req,res,next) =>{
     }
     //passport.authenticate = passport 인증 routing method
 },passport.authenticate('local-login', {
-    successRedirect : '/user', //성공시 메엔페이지로 라우팅 설정
+    successRedirect : '/user', //성공시 메인페이지로 라우팅 설정
     failureRedirect : '/', //실패시 로그인 페이지로 라우팅 설정
     failureFlash : true})
 //소스코드에선 successRedirect 가 /temp되었는데 그 이유는 이 유저가 이메일 인증 했는지 확인 하기 위해서 이지만, 나는 거기까지 가지 안아서 그냥 메일 페이지로 리턴 시킨다. 
 );
-function isLoggedIn(req,res,next){
-    if(!req.authenticate()){
-        return next();
-    }else{
-        red.render('../views/loginpage.ejs');
-    }
-}
 function checkUser(req,res,next){
     var isValid = true;
     const datas = userModel;
@@ -79,7 +72,7 @@ function checkUser(req,res,next){
     )
 }
 router.get('/user',checkUser ,function(req,res,next){
-    userModel.findOne(req.body.Email, function(err,user){
+    userModel.findOne(req.session.Email, function(err,user){
         if(err) return res.render('../views/error.ejs',{error : err})
         else{
             console.log('this is user', user);
@@ -87,6 +80,23 @@ router.get('/user',checkUser ,function(req,res,next){
         }
     })
 })
+//===============================네이버를 연동해서 로그인 하기=================
+function isLoggedIn(req,res,next){
+    if(!req.authenticate()){
+        return next();
+    }else{
+        red.render('../views/loginpage.ejs');
+    }
+}
+router.get('/auth/naver',isLoggedIn, passport.authenticate('naver',{
+    successRedirect : '/user',
+    failureRedirect : '/'
+}))
+router.get('/naver_oauth',passport.authenticate('naver',{
+    successRedirect : '/user',
+    failureRedirect : '/'
+}))
+
 //================================가입기능====================================
 //checkUserRegValidation는 기입된 정보가 기존의 데이터베이스에 있는 중복된 정보인지 확인하는 함수이다.
 function checkUserRegValidation(req,res,next){

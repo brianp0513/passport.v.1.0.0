@@ -10,9 +10,10 @@ const userRoute = require('./route/user');
 const userModel = require('./model/userModel')
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
+const NaverStrategy = require('passport-naver').Strategy;
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const flash = require('connect-flash')
+const flash = require('connect-flash');
 const helmet = require('helmet');
 const assert = require('assert');
 const MongoDBStore = require('connect-mongodb-session')(session);
@@ -77,6 +78,7 @@ store.on('error', function(error){
     assert.ok(false);
 });
 //===================여기까지가 미들웨어 설정===============================================
+//local login
 passport.use('local-login', new LocalStrategy({
     usernameField : 'Email',
     passwordField : 'PW',
@@ -99,6 +101,49 @@ passport.use('local-login', new LocalStrategy({
         }
     })
 }));
+//naver로 로그인
+passport.use('naver', new NaverStrategy({
+    clientID : 'WLIj3VHT6mxIFaHQA_U0',
+    clientSecret : 'zCG9a1O1Ei',
+    callbackURL : 'http://localhost:8080/naver_oauth'
+},  (accessToken, refreshToken, profile,callback)=>{
+    userModel.findOne({sns : 'naver', Email : profile.id}, (err,user)=>{
+        if(err){return callback(err);}//그냥 오류나면 err로 콜백
+        if(!user){//해당 연동 계정이 내 웹사이트 DB에 없으면 새로 만든다.
+            const rawemail = JSON.stringify(profile.emails);
+            const emailArray = rawemail.split('"');
+            const email = emailArray[3];
+            console.log('this is convert email  : ', email);
+            userModel.create({
+                name : profile.displayName,
+                Email : email,
+                token : accessToken},   function(err,user){
+                    if(err) {
+                        console.log('error detected!');
+                        return callback(err);
+                    }
+                    else{callback(null,user);}
+                }
+            );
+        }
+        else{//해당 연동 계정이 내 웹사이트에 있으면 접속날짜를 갱신(이기능은 미구현이지만 써놓긴 하겠다.)하고 접속.
+            const  temp = accessToken;
+            const temp2 = new Date();
+            // userModel.findByIdAndUpdate(user._id,{ $set : {lastvisited : temp2, token : temp}}, function(err,user){
+            //     if(err){return callback(err);}
+            //     callback(null,user);
+            // })
+            userModel.findById(user._id,(err,user)=>{
+                if(err){
+                    return callback(err);
+                }
+                else{
+                    callback(null,user);
+                }
+            })
+        }
+    })
+}))
 //라우터 경로들 
 
 app.use('/',userRoute);
